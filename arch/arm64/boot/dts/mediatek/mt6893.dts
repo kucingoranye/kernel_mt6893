@@ -8379,3 +8379,13 @@ page_owner=on loop.max_part=7";
 #ifdef CONFIG_MTK_ENABLE_GENIEZONE
 #include "mediatek/trusty.dtsi"
 #endif
+
+/*
+ * chopin has no microSD slot; the CD GPIO floats as "card inserted" so the
+ * SD host retries init forever (CMD8/CMD55 timeout spam every boot).
+ * Disabled here rather than in the board overlay (as ares does) because
+ * chopin ships a prebuilt stock dtbo that never touches msdc1.
+ */
+&msdc1 {
+	status = "disabled";
+};
