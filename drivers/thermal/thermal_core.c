@@ -1731,13 +1731,18 @@ cpu_limits_store(struct device *dev,
 		pr_err("input param error, can not prase param\n");
 		return -EINVAL;
 	}
-  	//mt6877: cluster 0: 0-5, cluster 1: 6-7
-	if (cpu >= 0 && cpu <= 5)
-		cpu = 0;
-	else if (cpu >= 6 && cpu <= 7)
-		cpu = 1;
 
-	mt_ppm_sysboost_set_freq_limit(BOOST_BY_XM_THERMAL, cpu, -1, max);
+	/*
+	 * Accept but do not forward to PPM sysboost. The cpu->cluster
+	 * mapping this used was written for mt6877 (cpu0-5/cpu6-7), so on
+	 * mt6891/mt6893 (4+3+1) mi_thermald's cpu4/cpu7 caps landed on the
+	 * little/mid clusters and never on the prime core. Remapping is no
+	 * better: these are standing default-mode caps (mid 1.8GHz, prime
+	 * 2.2GHz even when cool) that MIUI lifts per-scene but nothing on
+	 * this ROM does. Thermal control still works through mi_thermald's
+	 * scaling_max_freq path and the temperature-driven
+	 * PPM_POLICY_THERMAL.
+	 */
 
 	return len;
 
