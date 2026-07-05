@@ -478,8 +478,8 @@ OPP_TBL(CCI, 30G28G, 2, 4);
 static struct opp_tbl_info opp_tbls[NR_MT_CPU_DVFS][NUM_CPU_LEVEL] = {
 	/* LL */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_LL_e0_0,
-			ARRAY_SIZE(opp_tbl_LL_e0_0) },
+		[CPU_LEVEL_0] = { opp_tbl_LL_e1_0,
+			ARRAY_SIZE(opp_tbl_LL_e1_0) },
 		[CPU_LEVEL_1] = { opp_tbl_LL_e1_0,
 			ARRAY_SIZE(opp_tbl_LL_e0_0) },
 		[CPU_LEVEL_2] = { opp_tbl_LL_e2_0,
@@ -487,8 +487,8 @@ static struct opp_tbl_info opp_tbls[NR_MT_CPU_DVFS][NUM_CPU_LEVEL] = {
 	},
 	/* L */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_L_e0_0,
-			ARRAY_SIZE(opp_tbl_L_e0_0) },
+		[CPU_LEVEL_0] = { opp_tbl_L_e1_0,
+			ARRAY_SIZE(opp_tbl_L_e1_0) },
 		[CPU_LEVEL_1] = { opp_tbl_L_e1_0,
 			ARRAY_SIZE(opp_tbl_L_e1_0) },
 		[CPU_LEVEL_2] = { opp_tbl_L_e2_0,
@@ -496,8 +496,8 @@ static struct opp_tbl_info opp_tbls[NR_MT_CPU_DVFS][NUM_CPU_LEVEL] = {
 	},
 	/* B */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_B_e0_0,
-			ARRAY_SIZE(opp_tbl_B_e0_0) },
+		[CPU_LEVEL_0] = { opp_tbl_B_e1_0,
+			ARRAY_SIZE(opp_tbl_B_e1_0) },
 		[CPU_LEVEL_1] = { opp_tbl_B_e1_0,
 			ARRAY_SIZE(opp_tbl_B_e1_0) },
 		[CPU_LEVEL_2] = { opp_tbl_B_e2_0,
@@ -505,8 +505,8 @@ static struct opp_tbl_info opp_tbls[NR_MT_CPU_DVFS][NUM_CPU_LEVEL] = {
 	},
 	/* CCI */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_CCI_e0_0,
-			ARRAY_SIZE(opp_tbl_CCI_e0_0) },
+		[CPU_LEVEL_0] = { opp_tbl_CCI_e1_0,
+			ARRAY_SIZE(opp_tbl_CCI_e1_0) },
 		[CPU_LEVEL_1] = { opp_tbl_CCI_e1_0,
 			ARRAY_SIZE(opp_tbl_CCI_e1_0) },
 		[CPU_LEVEL_2] = { opp_tbl_CCI_e2_0,
@@ -746,25 +746,25 @@ static struct mt_cpu_freq_method opp_tbl_method_CCI_30G28G[] = {
 struct opp_tbl_m_info opp_tbls_m[NR_MT_CPU_DVFS][NUM_CPU_LEVEL] = {
 	/* LL */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_method_LL_26G26G },
+		[CPU_LEVEL_0] = { opp_tbl_method_LL_30G26G },
 		[CPU_LEVEL_1] = { opp_tbl_method_LL_30G26G },
 		[CPU_LEVEL_2] = { opp_tbl_method_LL_30G28G },
 	},
 	/* L */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_method_L_26G26G },
+		[CPU_LEVEL_0] = { opp_tbl_method_L_30G26G },
 		[CPU_LEVEL_1] = { opp_tbl_method_L_30G26G },
 		[CPU_LEVEL_2] = { opp_tbl_method_L_30G28G },
 	},
 	/* B */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_method_B_26G26G },
+		[CPU_LEVEL_0] = { opp_tbl_method_B_30G26G },
 		[CPU_LEVEL_1] = { opp_tbl_method_B_30G26G },
 		[CPU_LEVEL_2] = { opp_tbl_method_B_30G28G },
 	},
 	/* CCI */
 	{
-		[CPU_LEVEL_0] = { opp_tbl_method_CCI_26G26G },
+		[CPU_LEVEL_0] = { opp_tbl_method_CCI_30G26G },
 		[CPU_LEVEL_1] = { opp_tbl_method_CCI_30G26G },
 		[CPU_LEVEL_2] = { opp_tbl_method_CCI_30G28G },
 	},

@@ -82,19 +82,19 @@ struct upower_tbl_info
 	/* 6893 */
 	[0] = {
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_LL,
-				upower_tbl_l_26G26G),
+				upower_tbl_l_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_L,
-				upower_tbl_bl_26G26G),
+				upower_tbl_bl_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_B,
-				upower_tbl_b_26G26G),
+				upower_tbl_b_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_CLS_LL,
-				upower_tbl_cluster_l_26G26G),
+				upower_tbl_cluster_l_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_CLS_L,
-				upower_tbl_cluster_bl_26G26G),
+				upower_tbl_cluster_bl_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_CLS_B,
-				upower_tbl_cluster_b_26G26G),
+				upower_tbl_cluster_b_30G26G),
 		INIT_UPOWER_TBL_INFOS(UPOWER_BANK_CCI,
-				upower_tbl_cci_26G26G),
+				upower_tbl_cci_30G26G),
 	},
 
 	[1] = {

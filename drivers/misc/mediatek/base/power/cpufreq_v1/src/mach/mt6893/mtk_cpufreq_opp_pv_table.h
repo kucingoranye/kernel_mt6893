@@ -232,7 +232,7 @@ static unsigned int FY_30G28G[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 };
 
 unsigned int *xrecordTbl[NUM_CPU_LEVEL] = {
-	[CPU_LEVEL_0] = &FY_26G26G[0][0],
+	[CPU_LEVEL_0] = &FY_30G26G[0][0],
 	[CPU_LEVEL_1] = &FY_30G26G[0][0],
 	[CPU_LEVEL_2] = &FY_30G28G[0][0],
 };
