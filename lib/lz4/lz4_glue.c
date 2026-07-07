@@ -62,6 +62,15 @@ EXPORT_SYMBOL(LZ4_compress_default);
 int LZ4_compress_HC(const char *src, char *dst, int srcSize, int dstCapacity,
 	int compressionLevel, void *wrkmem)
 {
+	/*
+	 * Levels >= LZ4HC_CLEVEL_OPT_MIN run LZ4HC_compress_optimal, whose
+	 * ~64 KB opt[] frame (LZ4HC_HEAPMODE=0, no heap in freestanding
+	 * mode) cannot fit a 16 KB kernel stack. Cap at the highest
+	 * non-optimal level; in-tree callers only use level 9 anyway.
+	 */
+	if (compressionLevel >= LZ4HC_CLEVEL_OPT_MIN)
+		compressionLevel = LZ4HC_CLEVEL_OPT_MIN - 1;
+
 	return LZ4_compress_HC_extStateHC(wrkmem, src, dst, srcSize,
 					  dstCapacity, compressionLevel);
 }

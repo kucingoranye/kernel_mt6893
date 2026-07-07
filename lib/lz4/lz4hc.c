@@ -1820,7 +1820,16 @@ LZ4HC_FindLongerMatch(LZ4HC_CCtx_internal* const ctx,
 }
 
 
-static int LZ4HC_compress_optimal ( LZ4HC_CCtx_internal* ctx,
+/*
+ * Kernel: must never be inlined. With LZ4HC_HEAPMODE=0 the ~64 KB opt[]
+ * below is part of this function's stack frame; inlined into
+ * LZ4HC_compress_generic_internal it lands on every HC call path and
+ * overflows the 16 KB arm64 kernel stack even at levels below
+ * LZ4HC_CLEVEL_OPT_MIN, which never execute this parser. Actually
+ * calling it is prevented by the level clamp in lz4_glue.c.
+ */
+static int __attribute__((__noinline__))
+       LZ4HC_compress_optimal ( LZ4HC_CCtx_internal* ctx,
                                     const char* const source,
                                     char* dst,
                                     int* srcSizePtr,
