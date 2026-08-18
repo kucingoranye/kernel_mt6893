@@ -7,15 +7,6 @@ on:
         description: 'Defconfig yang dipakai'
         required: false
         default: 'chopin_defconfig' # Ganti jika nama defconfig bawaan Anda berbeda (misal k6891v1_64_defconfig)
-      lto_mode:
-        description: 'Mode LTO (thin/full/none)'
-        required: false
-        default: 'full'
-        type: choice
-        options:
-          - thin
-          - full
-          - none
       enable_o3:
         description: 'Eksperimental: paksa -O3 seluruh kernel'
         required: false
@@ -55,9 +46,10 @@ jobs:
 
       - name: Setup swap tambahan
         run: |
-          LTO_MODE="${{ github.event.inputs.lto_mode || 'full' }}"
-          if [ "$LTO_MODE" = "full" ]; then SWAP_SIZE="8G"; else SWAP_SIZE="4G"; fi
-          echo "Menambahkan swap ${SWAP_SIZE} (mode LTO: ${LTO_MODE})..."
+          # Thin LTO jauh lebih hemat memori dibanding Full LTO,
+          # 6G swap sudah cukup untuk jaga-jaga saat link stage.
+          SWAP_SIZE="6G"
+          echo "Menambahkan swap ${SWAP_SIZE} (mode LTO: thin)..."
           sudo fallocate -l "$SWAP_SIZE" /swapfile_ci
           sudo chmod 600 /swapfile_ci
           sudo mkswap /swapfile_ci
@@ -124,7 +116,6 @@ jobs:
           mkdir -p "$OUT_DIR"
 
           DEFCONFIG="${{ github.event.inputs.defconfig || 'chopin_defconfig' }}"
-          LTO_MODE="${{ github.event.inputs.lto_mode || 'full' }}"
           ENABLE_O3="${{ github.event.inputs.enable_o3 || 'false' }}"
 
           # Optimasi ARMv8.2-A (Mencakup Cortex-A78 & Cortex-A55 Dimensity 1100)
@@ -158,16 +149,15 @@ jobs:
 
           make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" "$DEFCONFIG" 2>&1 | tee "$LOG_FILE"
 
-          if [ "$LTO_MODE" = "full" ]; then
-            ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
-            ./scripts/config --file "$OUT_DIR/.config" -d THINLTO
-          elif [ "$LTO_MODE" = "thin" ]; then
-            ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
-            ./scripts/config --file "$OUT_DIR/.config" -e THINLTO
-          else
-            ./scripts/config --file "$OUT_DIR/.config" -d LTO_CLANG
-            ./scripts/config --file "$OUT_DIR/.config" -d THINLTO
-          fi
+          # Selalu Thin LTO
+          ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
+          ./scripts/config --file "$OUT_DIR/.config" -e THINLTO
+
+          # Fix: kernel basis 4.14 ini belum punya patch "postpone CRC link",
+          # jadi MODVERSIONS tidak kompatibel dengan LTO_CLANG (error __crc_*
+          # relocation R_AARCH64_ABS32 saat link). Aman dimatikan karena build
+          # ini monolithic (bukan GKI yang butuh cek versi modul eksternal).
+          ./scripts/config --file "$OUT_DIR/.config" -d MODVERSIONS
 
           if [ "$ENABLE_O3" = "true" ]; then
             if grep -q "CC_OPTIMIZE_FOR_PERFORMANCE_O3" "$KERNEL_DIR/init/Kconfig" 2>/dev/null; then
@@ -191,7 +181,6 @@ jobs:
           echo "duration_min=${MIN}" >> "$GITHUB_OUTPUT"
           echo "duration_sec=${SEC}" >> "$GITHUB_OUTPUT"
           echo "defconfig=${DEFCONFIG}" >> "$GITHUB_OUTPUT"
-          echo "lto_mode=${LTO_MODE}" >> "$GITHUB_OUTPUT"
           echo "enable_o3=${ENABLE_O3}" >> "$GITHUB_OUTPUT"
 
           exit "$BUILD_EXIT"
@@ -270,8 +259,7 @@ jobs:
             echo "|---|---|"
             echo "| Device | Poco X3 GT (Dimensity 1100) |"
             echo "| Defconfig | \`${{ steps.build.outputs.defconfig }}\` |"
-            echo "| Mode LTO | \`${{ steps.build.outputs.lto_mode }}\` |"
+            echo "| Mode LTO | \`thin\` |"
             echo "| Waktu kompilasi | **${{ steps.build.outputs.duration_min }} menit ${{ steps.build.outputs.duration_sec }} detik** |"
             echo "| Status | ${{ job.status }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-          
