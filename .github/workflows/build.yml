@@ -1,0 +1,277 @@
+name: Build Kernel 4.14 Chopin Dimensity 1100
+
+on:
+  workflow_dispatch:
+    inputs:
+      defconfig:
+        description: 'Defconfig yang dipakai'
+        required: false
+        default: 'chopin_defconfig' # Ganti jika nama defconfig bawaan Anda berbeda (misal k6891v1_64_defconfig)
+      lto_mode:
+        description: 'Mode LTO (thin/full/none)'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - thin
+          - full
+          - none
+      enable_o3:
+        description: 'Eksperimental: paksa -O3 seluruh kernel'
+        required: false
+        default: false
+        type: boolean
+      artifact_scope:
+        description: 'File yang diupload sebagai artifact'
+        required: false
+        default: 'anykernel'
+        type: choice
+        options:
+          - anykernel
+          - ringkas
+          - lengkap
+
+env:
+  KERNEL_DIR: ${{ github.workspace }}/kernel
+  TC_DIR: ${{ github.workspace }}/toolchain/aosp-clang
+  OUT_DIR: ${{ github.workspace }}/kernel/out
+  AOSP_CLANG_TAG: r547379
+  AOSP_CLANG_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86
+  ANYKERNEL_URL: https://github.com/osm0sis/AnyKernel3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v6
+        with:
+          path: kernel
+
+      - name: Cek sisa disk
+        run: df -h /
+
+      - name: Setup swap tambahan
+        run: |
+          LTO_MODE="${{ github.event.inputs.lto_mode || 'full' }}"
+          if [ "$LTO_MODE" = "full" ]; then SWAP_SIZE="8G"; else SWAP_SIZE="4G"; fi
+          echo "Menambahkan swap ${SWAP_SIZE} (mode LTO: ${LTO_MODE})..."
+          sudo fallocate -l "$SWAP_SIZE" /swapfile_ci
+          sudo chmod 600 /swapfile_ci
+          sudo mkswap /swapfile_ci
+          sudo swapon /swapfile_ci
+          free -h
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison flex libssl-dev libelf-dev \
+            build-essential zip curl git python3 \
+            python-is-python3 ccache llvm lld \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+
+      - name: Cache AOSP Clang toolchain
+        id: cache-toolchain
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.TC_DIR }}
+          key: aosp-clang-${{ env.AOSP_CLANG_TAG }}
+
+      - name: Download AOSP Clang toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$TC_DIR"
+          curl -L --fail \
+            "${AOSP_CLANG_URL}/+archive/refs/heads/main/clang-${AOSP_CLANG_TAG}.tar.gz" \
+            -o /tmp/clang.tar.gz
+          tar -xzf /tmp/clang.tar.gz -C "$TC_DIR"
+          rm -f /tmp/clang.tar.gz
+
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.ccache
+          key: ccache-chopin414-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-chopin414-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-
+
+      - name: Setup ccache
+        run: |
+          export CCACHE_DIR=~/.ccache
+          ccache -M 5G
+          ccache -z
+
+      - name: Setup toolchain PATH
+        run: echo "$TC_DIR/bin" >> "$GITHUB_PATH"
+
+      - name: Siapkan nama artifact
+        id: meta
+        if: always()
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          BRANCH_SAFE="${BRANCH_NAME//\//-}"
+          TANGGAL=$(date +'%d%m%Y')
+          echo "artifact_name=kernel-4.14-chopin-${BRANCH_SAFE}-${{ github.run_number }}-${TANGGAL}" >> "$GITHUB_OUTPUT"
+
+      - name: Build kernel
+        id: build
+        run: |
+          START_TIME=$(date +%s)
+          cd "$KERNEL_DIR"
+          mkdir -p "$OUT_DIR"
+
+          DEFCONFIG="${{ github.event.inputs.defconfig || 'chopin_defconfig' }}"
+          LTO_MODE="${{ github.event.inputs.lto_mode || 'full' }}"
+          ENABLE_O3="${{ github.event.inputs.enable_o3 || 'false' }}"
+
+          # Optimasi ARMv8.2-A (Mencakup Cortex-A78 & Cortex-A55 Dimensity 1100)
+          CUSTOM_CFLAGS="-march=armv8.2-a -mno-outline -mno-outline-atomics"
+
+          TOOLCHAIN_ARGS=(
+            ARCH=arm64
+            CC="ccache clang"
+            HOSTCC="ccache clang"
+            HOSTCXX="ccache clang++"
+            LD=ld.lld
+            AR=llvm-ar
+            NM=llvm-nm
+            OBJCOPY=llvm-objcopy
+            OBJDUMP=llvm-objdump
+            STRIP=llvm-strip
+            READELF=llvm-readelf
+            OBJSIZE=llvm-size
+            LLVM=1
+            LLVM_IAS=1
+            KBUILD_BUILD_USER=builder
+            KBUILD_BUILD_HOST=ardiantowb
+            KBUILD_BUILD_TIMESTAMP="$(TZ='UTC' date '+%a %B %d %H:%M:%S %Z %Y')"
+            CLANG_TRIPLE=aarch64-linux-gnu-
+            CROSS_COMPILE=aarch64-linux-gnu-
+            CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+            KCFLAGS="$CUSTOM_CFLAGS"
+          )
+
+          LOG_FILE="${{ github.workspace }}/build.log"
+
+          make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" "$DEFCONFIG" 2>&1 | tee "$LOG_FILE"
+
+          if [ "$LTO_MODE" = "full" ]; then
+            ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
+            ./scripts/config --file "$OUT_DIR/.config" -d THINLTO
+          elif [ "$LTO_MODE" = "thin" ]; then
+            ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
+            ./scripts/config --file "$OUT_DIR/.config" -e THINLTO
+          else
+            ./scripts/config --file "$OUT_DIR/.config" -d LTO_CLANG
+            ./scripts/config --file "$OUT_DIR/.config" -d THINLTO
+          fi
+
+          if [ "$ENABLE_O3" = "true" ]; then
+            if grep -q "CC_OPTIMIZE_FOR_PERFORMANCE_O3" "$KERNEL_DIR/init/Kconfig" 2>/dev/null; then
+              ./scripts/config --file "$OUT_DIR/.config" -e CC_OPTIMIZE_FOR_PERFORMANCE_O3
+            fi
+          fi
+
+          make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" olddefconfig 2>&1 | tee -a "$LOG_FILE"
+          
+          # Build utama
+          make -j"$(nproc --all)" O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
+          BUILD_EXIT=${PIPESTATUS[0]}
+
+          ccache -s | tee -a "$LOG_FILE"
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          MIN=$((DURATION / 60))
+          SEC=$((DURATION % 60))
+
+          echo "duration_min=${MIN}" >> "$GITHUB_OUTPUT"
+          echo "duration_sec=${SEC}" >> "$GITHUB_OUTPUT"
+          echo "defconfig=${DEFCONFIG}" >> "$GITHUB_OUTPUT"
+          echo "lto_mode=${LTO_MODE}" >> "$GITHUB_OUTPUT"
+          echo "enable_o3=${ENABLE_O3}" >> "$GITHUB_OUTPUT"
+
+          exit "$BUILD_EXIT"
+
+      - name: Verify build output
+        id: verify
+        run: |
+          # MediaTek biasanya menggunakan appended dtb (Image.gz-dtb)
+          IMG_GZ_DTB="$OUT_DIR/arch/arm64/boot/Image.gz-dtb"
+          IMG_GZ="$OUT_DIR/arch/arm64/boot/Image.gz"
+          
+          if [ -f "$IMG_GZ_DTB" ]; then
+            echo "BUILD BERHASIL - Image.gz-dtb ditemukan"
+            echo "kernel_file=$IMG_GZ_DTB" >> "$GITHUB_OUTPUT"
+          elif [ -f "$IMG_GZ" ]; then
+            echo "BUILD BERHASIL - Image.gz ditemukan (tanpa appended dtb)"
+            echo "kernel_file=$IMG_GZ" >> "$GITHUB_OUTPUT"
+          else
+            echo "BUILD GAGAL - file kernel tidak ditemukan"
+            exit 1
+          fi
+
+      - name: Create AnyKernel3 Zip
+        id: anykernel
+        if: ${{ (github.event.inputs.artifact_scope || 'anykernel') == 'anykernel' }}
+        run: |
+          cd ${{ github.workspace }}
+          git clone ${ANYKERNEL_URL} AnyKernel3
+          cd AnyKernel3
+          
+          # Bersihkan file dummy bawaan AK3
+          rm -rf Image Image.gz Image.gz-dtb dtb zImage
+          
+          # Salin hasil build
+          cp ${{ steps.verify.outputs.kernel_file }} .
+          
+          # Zip direktori AnyKernel3
+          ZIP_NAME="AnyKernel3-Chopin-${{ github.run_number }}.zip"
+          zip -r9 ../$ZIP_NAME * -x .git README.md *placeholder
+          echo "zip_path=${{ github.workspace }}/$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload AnyKernel3 Zip
+        if: ${{ (github.event.inputs.artifact_scope || 'anykernel') == 'anykernel' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: AK3-${{ steps.meta.outputs.artifact_name }}
+          path: ${{ steps.anykernel.outputs.zip_path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload kernel build (lengkap, seluruh folder out)
+        if: ${{ github.event.inputs.artifact_scope == 'lengkap' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}-out
+          path: ${{ env.OUT_DIR }}
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload log build
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}-log
+          path: ${{ github.workspace }}/build.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Build summary
+        if: always()
+        run: |
+          {
+            echo "## Ringkasan Build Kernel Chopin"
+            echo ""
+            echo "| Item | Nilai |"
+            echo "|---|---|"
+            echo "| Device | Poco X3 GT (Dimensity 1100) |"
+            echo "| Defconfig | \`${{ steps.build.outputs.defconfig }}\` |"
+            echo "| Mode LTO | \`${{ steps.build.outputs.lto_mode }}\` |"
+            echo "| Waktu kompilasi | **${{ steps.build.outputs.duration_min }} menit ${{ steps.build.outputs.duration_sec }} detik** |"
+            echo "| Status | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          
