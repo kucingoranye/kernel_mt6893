@@ -150,8 +150,9 @@ jobs:
           make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" "$DEFCONFIG" 2>&1 | tee "$LOG_FILE"
 
           # Selalu Thin LTO
-          ./scripts/config --file "$OUT_DIR/.config" -e LTO_CLANG
-          ./scripts/config --file "$OUT_DIR/.config" -e THINLTO
+          ./scripts/config --file "$OUT_DIR/.config" -d LTO_CLANG
+          ./scripts/config --file "$OUT_DIR/.config" -d THINLTO
+          ./scripts/config --file "$OUT_DIR/.config" -e LTO_NONE
 
           # Fix: kernel basis 4.14 ini belum punya patch "postpone CRC link",
           # jadi MODVERSIONS tidak kompatibel dengan LTO_CLANG (error __crc_*
