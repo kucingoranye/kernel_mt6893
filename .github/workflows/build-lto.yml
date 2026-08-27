@@ -568,7 +568,9 @@ jobs:
               exit 1
             fi
             if grep -q '^CONFIG_MODVERSIONS=y' "$CONFIG_OUT"; then
-              echo "::error::CONFIG_MODVERSIONS masih aktif walau LTO menyala - kombinasi ini akan gagal link dengan error 'relocation R_AARCH64_ABS32 cannot be used against symbol __crc_...'. Cek apakah ada config lain (mis. dari Droidspaces atau defconfig lama) yang memaksa CONFIG_MODVERSIONS=y kembali."
+              echo "::error::CONFIG_MODVERSIONS masih aktif walau LTO menyala - kombinasi ini akan gagal link dengan error 'relocation R_AARCH64_ABS32 cannot be used against symbol __crc_...'."
+              echo "Kemungkinan ada opsi lain yang men-select MODVERSIONS (select selalu menang atas '# CONFIG_MODVERSIONS is not set' di defconfig). Mencari sumbernya di source tree:"
+              grep -rn "select MODVERSIONS" --include="Kconfig*" . || echo "(tidak ditemukan 'select MODVERSIONS' langsung - kemungkinan dari def_bool/default y bersyarat, cek manual: grep -rn 'MODVERSIONS' --include=Kconfig* .)"
               exit 1
             fi
             echo "LTO ($LTO_MODE) terverifikasi aktif di .config"
