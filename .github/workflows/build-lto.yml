@@ -1,4 +1,4 @@
-name: Build Kernel 4.14 Chopin lto
+name: Build Kernel 4.14 Chopin MT6891
 
 on:
   workflow_dispatch:
@@ -56,8 +56,8 @@ on:
 
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
-  KERNEL_REPO: https://github.com/kucingoranye/kernel_mt6893
-  KERNEL_BRANCH: test3-lto
+  KERNEL_REPO: https://github.com/seriaTvT/kernel_mt6893
+  KERNEL_BRANCH: chopin_kvm
   KERNEL_DEVICE: chopin
 
   TC_DIR: ${{ github.workspace }}/toolchain/clang
@@ -420,7 +420,7 @@ jobs:
           # Buang dulu setting LTO lama kalau ada (dari commit manual
           # sebelumnya, atau re-run dengan pilihan LTO yang berbeda),
           # supaya tidak dobel/konflik.
-          sed -i '/^CONFIG_LTO_CLANG/d; /^CONFIG_THINLTO/d; /^# CONFIG_LTO_CLANG/d; /^# ===== LTO Clang/d' "$DEFCONFIG"
+          sed -i '/^CONFIG_LTO_CLANG/d; /^CONFIG_THINLTO/d; /^# CONFIG_LTO_CLANG/d; /^# ===== LTO Clang/d; /^CONFIG_MODVERSIONS/d; /^# CONFIG_MODVERSIONS/d' "$DEFCONFIG"
 
           if [ "$LTO_MODE" = "none" ]; then
             echo "LTO dimatikan (mode: none), tidak ada konfigurasi LTO yang ditambahkan"
@@ -433,8 +433,17 @@ jobs:
               if [ "$LTO_MODE" = "thin" ]; then
                 echo "CONFIG_THINLTO=y"
               fi
+              # CONFIG_MODVERSIONS dimatikan saat LTO aktif: tabel CRC
+              # (__crc_*) untuk versioning modul tidak bisa direlokasi
+              # dengan benar oleh ld.lld setelah semua object digabung
+              # jadi satu vmlinux.o oleh LTO - menyebabkan build gagal
+              # dengan error "relocation R_AARCH64_ABS32 cannot be used
+              # against symbol '__crc_...'; recompile with -fPIC".
+              # Modul .ko tetap kompatibel karena dibangun dari source
+              # tree yang sama di run yang sama.
+              echo "# CONFIG_MODVERSIONS is not set"
             } >> "$DEFCONFIG"
-            echo "Konfigurasi LTO ($LTO_MODE) ditambahkan ke $DEFCONFIG"
+            echo "Konfigurasi LTO ($LTO_MODE) ditambahkan ke $DEFCONFIG (MODVERSIONS dimatikan)"
           fi
 
           echo "lto_mode=${LTO_MODE}" >> "$GITHUB_OUTPUT"
@@ -556,6 +565,10 @@ jobs:
             fi
             if [ "$LTO_MODE" = "thin" ] && ! grep -q '^CONFIG_THINLTO=y' "$CONFIG_OUT"; then
               echo "::error::CONFIG_THINLTO tidak aktif di .config. Cek arch/arm64/Kconfig untuk 'select ARCH_SUPPORTS_THINLTO' di dalam blok 'config ARM64'."
+              exit 1
+            fi
+            if grep -q '^CONFIG_MODVERSIONS=y' "$CONFIG_OUT"; then
+              echo "::error::CONFIG_MODVERSIONS masih aktif walau LTO menyala - kombinasi ini akan gagal link dengan error 'relocation R_AARCH64_ABS32 cannot be used against symbol __crc_...'. Cek apakah ada config lain (mis. dari Droidspaces atau defconfig lama) yang memaksa CONFIG_MODVERSIONS=y kembali."
               exit 1
             fi
             echo "LTO ($LTO_MODE) terverifikasi aktif di .config"
