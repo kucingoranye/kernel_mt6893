@@ -1,4 +1,4 @@
-name: Build Kernel 4.14 Chopin MT6891
+name: Build Kernel 4.14 Chopin lto
 
 on:
   workflow_dispatch:
@@ -56,8 +56,8 @@ on:
 
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
-  KERNEL_REPO: https://github.com/seriaTvT/kernel_mt6893
-  KERNEL_BRANCH: chopin_kvm
+  KERNEL_REPO: https://github.com/kucingoranye/kernel_mt6893
+  KERNEL_BRANCH: test3-lto
   KERNEL_DEVICE: chopin
 
   TC_DIR: ${{ github.workspace }}/toolchain/clang
