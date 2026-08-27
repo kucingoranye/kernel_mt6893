@@ -10,7 +10,7 @@ on:
       toolchain:
         description: 'Toolchain Clang yang dipakai'
         required: false
-        default: 'proton13'
+        default: 'aosp20'
         type: choice
         options:
           - proton13
@@ -44,11 +44,6 @@ on:
         required: false
         type: string
         default: ''
-      anykernel_ref:
-        description: 'Branch/tag/commit AnyKernel3 (osm0sis/AnyKernel3) yang dipakai. Default "master" selalu ambil versi terbaru - bisa berubah sewaktu-waktu dan berpotensi menimbulkan regresi baru. Kunci ke commit SHA tertentu kalau ingin build yang reproducible/stabil.'
-        required: false
-        type: string
-        default: 'master'
 
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
@@ -62,9 +57,9 @@ env:
   ANYKERNEL_REPO: https://github.com/osm0sis/AnyKernel3
 
   # --- Sumber tiap toolchain ---
-  # proton13 -> Proton Clang (kdrag0n), rilis terakhir = Clang 13.0.0 (20210522) - default
+  # proton13 -> Proton Clang (kdrag0n), rilis terakhir = Clang 13.0.0 (20210522)
   PROTON_CLANG_REPO: https://github.com/kdrag0n/proton-clang
-  # aosp20   -> AOSP Clang r547379 (Clang 20.0.0, dipakai untuk rilis Android 16)
+  # aosp20   -> AOSP Clang r547379 (Clang 20.0.0, dipakai untuk rilis Android 16) - default
   AOSP_CLANG_URL: https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86
   AOSP_CLANG_TAG: r547379
   # zyc14    -> ZyC Clang 14.0.6 (build 20260619)
@@ -127,7 +122,7 @@ jobs:
       - name: Tentukan versi toolchain
         id: tcver
         run: |
-          TOOLCHAIN="${{ github.event.inputs.toolchain || 'proton13' }}"
+          TOOLCHAIN="${{ github.event.inputs.toolchain || 'aosp20' }}"
 
           case "$TOOLCHAIN" in
             proton13)
@@ -221,17 +216,10 @@ jobs:
       # ------------------------------------------------------------------
       - name: Siapkan AnyKernel3
         run: |
-          ANYKERNEL_REF="${{ github.event.inputs.anykernel_ref || 'master' }}"
-          echo "Menggunakan AnyKernel3 ref: ${ANYKERNEL_REF}"
-
-          # Clone via fetch+checkout (bukan --branch) supaya ref boleh berupa
-          # branch, tag, ATAU commit SHA - untuk pin versi tertentu kalau
-          # "master" (default) ternyata bawa perubahan yang bikin regresi.
-          git clone --filter=blob:none --no-checkout "${{ env.ANYKERNEL_REPO }}" AnyKernel3
-          cd AnyKernel3
-          git fetch --depth=1 origin "$ANYKERNEL_REF"
-          git checkout --recurse-submodules FETCH_HEAD
-          cd ..
+          # Selalu pakai branch "master" AnyKernel3 (osm0sis/AnyKernel3),
+          # tidak lagi bisa dipilih lewat input workflow.
+          git clone --recursive --depth=1 --branch master \
+            "${{ env.ANYKERNEL_REPO }}" AnyKernel3
 
           rm -f AnyKernel3/anykernel.sh
           cat << 'EOF' > AnyKernel3/anykernel.sh
@@ -405,7 +393,7 @@ jobs:
           BRANCH_NAME="${{ github.ref_name }}"
           BRANCH_SAFE="${BRANCH_NAME//\//-}"
           TANGGAL=$(date +'%d%m%Y')
-          TOOLCHAIN="${{ steps.tcver.outputs.toolchain || 'proton13' }}"
+          TOOLCHAIN="${{ steps.tcver.outputs.toolchain || 'aosp20' }}"
           echo "artifact_name=kernel-4.14-chopin-${TOOLCHAIN}-${BRANCH_SAFE}-${{ github.run_number }}-${TANGGAL}" >> "$GITHUB_OUTPUT"
           echo "tanggal=${TANGGAL}" >> "$GITHUB_OUTPUT"
 
