@@ -48,7 +48,7 @@ on:
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
   KERNEL_REPO: https://github.com/seriaTvT/kernel_mt6893
-  KERNEL_BRANCH: chopin_kvm
+  KERNEL_BRANCH: test2
   KERNEL_DEVICE: chopin
 
   TC_DIR: ${{ github.workspace }}/toolchain/clang
