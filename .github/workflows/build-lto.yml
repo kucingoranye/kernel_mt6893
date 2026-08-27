@@ -422,6 +422,29 @@ jobs:
           # supaya tidak dobel/konflik.
           sed -i '/^CONFIG_LTO_CLANG/d; /^CONFIG_THINLTO/d; /^# CONFIG_LTO_CLANG/d; /^# ===== LTO Clang/d; /^CONFIG_MODVERSIONS/d; /^# CONFIG_MODVERSIONS/d' "$DEFCONFIG"
 
+          # --- Netralkan 'select MODVERSIONS' yang memaksa CONFIG_MODVERSIONS
+          #     tetap hidup walau sudah diminta mati di defconfig ('select'
+          #     selalu menang atas '# CONFIG_X is not set', jadi harus
+          #     dikondisikan langsung di source-nya). Dua titik yang
+          #     ditemukan lewat diagnosis build sebelumnya:
+          #       - arch/Kconfig            : select MODVERSIONS if MODULES
+          #       - drivers/misc/mediatek/Kconfig.default : select MODVERSIONS
+          #     Dikondisikan dengan '!LTO_CLANG' supaya perilaku build
+          #     non-LTO tidak berubah sama sekali (modul vendor MTK tetap
+          #     dapat MODVERSIONS seperti biasa), dan cuma nonaktif saat
+          #     LTO benar-benar dipakai. Idempotent - aman dijalankan
+          #     berkali-kali karena pattern tidak akan match lagi setelah
+          #     berhasil dipatch sekali.
+          if [ -f arch/Kconfig ]; then
+            sed -i -E 's/^([[:space:]]*)select MODVERSIONS if MODULES[[:space:]]*$/\1select MODVERSIONS if MODULES \&\& !LTO_CLANG/' arch/Kconfig
+          fi
+          if [ -f drivers/misc/mediatek/Kconfig.default ]; then
+            sed -i -E 's/^([[:space:]]*)select MODVERSIONS[[:space:]]*$/\1select MODVERSIONS if !LTO_CLANG/' drivers/misc/mediatek/Kconfig.default
+          fi
+
+          echo "--- Status patch 'select MODVERSIONS' (harus tampil '!LTO_CLANG' di bawah kalau berhasil) ---"
+          grep -n "select MODVERSIONS" arch/Kconfig drivers/misc/mediatek/Kconfig.default 2>/dev/null || true
+
           if [ "$LTO_MODE" = "none" ]; then
             echo "LTO dimatikan (mode: none), tidak ada konfigurasi LTO yang ditambahkan"
           else
