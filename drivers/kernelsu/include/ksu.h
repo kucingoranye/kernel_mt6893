@@ -6,7 +6,7 @@
 #include <linux/workqueue.h>
 
 #ifndef KSU_VERSION_TAG
-#define KSU_VERSION_TAG "v3.3.0-33250"
+#define KSU_VERSION_TAG "v3.3.0"
 #endif
 
 #define KERNEL_SU_VERSION KSU_VERSION
