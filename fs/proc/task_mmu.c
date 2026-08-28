@@ -829,11 +829,6 @@ static void smap_gather_stats(struct vm_area_struct *vma,
 {
 	const struct mm_walk_ops *smaps_walk_target_ops = &smaps_walk_ops;
 
-#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-	if (vma->vm_file && SUSFS_IS_INODE_SUS_MAP(file_inode(vma->vm_file)))
-		return 0;
-#endif
-
 #ifdef CONFIG_SHMEM
 	/* In case of smaps_rollup, reset the value from previous vma */
 	mss->check_shmem_swap = false;
@@ -905,6 +900,11 @@ static int show_smap(struct seq_file *m, void *v)
 {
 	struct vm_area_struct *vma = v;
 	struct mem_size_stats mss;
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MAP
+	if (vma->vm_file && SUSFS_IS_INODE_SUS_MAP(file_inode(vma->vm_file)))
+		return 0;
+#endif
 
 	memset(&mss, 0, sizeof(mss));
 
