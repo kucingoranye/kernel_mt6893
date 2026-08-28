@@ -5,6 +5,10 @@
 #include <linux/cred.h>
 #include <linux/workqueue.h>
 
+#ifndef KSU_VERSION_TAG
+#define KSU_VERSION_TAG "v3.3.0-33250"
+#endif
+
 #define KERNEL_SU_VERSION KSU_VERSION
 #define KERNEL_SU_VERSION_TAG KSU_VERSION_TAG
 #define KERNEL_SU_OPTION 0xDEADBEEF
