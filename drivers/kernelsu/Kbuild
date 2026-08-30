@@ -59,9 +59,9 @@ GIT_BIN := /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git
 
 KSU_SRC := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-KSU_VERSION := 40893
+KSU_VERSION := 40895
 KSU_TAG_NAME := v4.2.0-rc1
-KSU_COMMIT_SHA := 25d94deb
+KSU_COMMIT_SHA := 82c7f72d
 KSU_BRANCH_NAME := main
 
 $(info -- ReSukiSU manual version code: $(KSU_VERSION))
