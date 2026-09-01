@@ -47,7 +47,7 @@ on:
 
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
-  KERNEL_REPO: https://github.com/seriaTvT/kernel_mt6893
+  KERNEL_REPO: https://github.com/kucingoranye/kernel_mt6893
   KERNEL_BRANCH: chopin_kvm
   KERNEL_DEVICE: chopin
 
