@@ -251,16 +251,17 @@ jobs:
 
           mkdir -p AnyKernel3/tools
           cat << 'EOF' > AnyKernel3/tools/banner.txt
+           
                         /\  /\  /\  /\  /\              
                         <>  <>  <>  <>  <>              
                         ==================              
-          
+           
                      Knight kernel for chopin           
                     by @ardiantowb on telegram          
-          
+           
               Thanks to seriaTvT (github) for source    
                and @itsukacchi (telegram) for help      
-          
+           
                               ______                    
                              /      \                   
                             /        \                  
@@ -269,7 +270,7 @@ jobs:
                               \    /                    
                                \  /                     
                                 \/                      
-          
+           
             "Ironclad stability, valiant performance"   
                           Knight kernel                 
           EOF
@@ -463,7 +464,7 @@ jobs:
             BUILD_TIMESTAMP="$(TZ="$BUILD_TZ" date '+%a %B %d %H:%M:%S %Z %Y')"
           fi
 
-          # Optimasi untuk MT6891 Dimensity 1100 (Cortex-A78 + Cortex-A55,
+          # Optimasi untuk Dimensity 1100 (Cortex-A78 + Cortex-A55,
           # ARMv8.2-A) - sama seperti kelas CPU di kernel 4.14 surya. Flag ini
           # juga tetap valid untuk saudara satu keluarga seperti Dimensity
           # 1200 (MT6893), karena core CPU-nya sama, hanya beda konfigurasi
@@ -639,7 +640,7 @@ jobs:
             echo ""
             echo "| Item | Nilai |"
             echo "|---|---|"
-            echo "| Device | chopin (MT6891 / Dimensity 1100) |"
+            echo "| Device | chopin (Dimensity 1100) |"
             echo "| Defconfig | \`${{ steps.build.outputs.defconfig }}\` |"
             echo "| Toolchain | \`${{ steps.build.outputs.toolchain }}\` |"
             echo "| Droidspaces | ${{ github.event.inputs.droidspaces_enabled }} |"
