@@ -40,7 +40,7 @@ ifdef CONFIG_ARM64
 kernelsu-objs += compat/apatch_conflict.o
 endif
 
-ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes 
+ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-missing-prototypes
 ccflags-y += $(call cc-disable-warning, int-conversion)
 ccflags-y += -Wno-declaration-after-statement -Wno-unused-function -Wno-unused-variable -Wno-missing-braces
 ccflags-y += -Wno-int-to-pointer-cast -Wno-declaration-after-statement
@@ -59,9 +59,9 @@ GIT_BIN := /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git
 
 KSU_SRC := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-KSU_VERSION := 40895
+KSU_VERSION := 40896
 KSU_TAG_NAME := v4.2.0-rc1
-KSU_COMMIT_SHA := 82c7f72d
+KSU_COMMIT_SHA := 0b5efe9e
 KSU_BRANCH_NAME := main
 
 $(info -- ReSukiSU manual version code: $(KSU_VERSION))

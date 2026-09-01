@@ -60,7 +60,7 @@
     <string name="reboot_download">Reboot to Download</string>
     <string name="reboot_edl">Reboot to EDL</string>
     <string name="about">About</string>
-    <string name="about_anime_character_sticker"><![CDATA[The images of the files with anime character sticker are copyrighted by %1$s, the Brand Intellectual Property in the images is owned by %2$s. Before using these files, in addition to complying with %3$s, you also need to comply with the authorization of the two authors to use these artistic contents.]]></string>
+    <string name="about_anime_character_sticker"><![CDATA[The icons are licensed under a special arrangement: drawn by 怡子曰曰, the copyright is held by 明风 OuO, and the vectorized icons are provided by this project.]]></string>
     <string name="get_source_code">Check for source code</string>
     <string name="get_source_code_detail">Check for source code on GitHub</string>
     <string name="join_telegram_group">Join community</string>
