@@ -224,7 +224,7 @@ jobs:
           rm -f AnyKernel3/anykernel.sh
           cat << 'EOF' > AnyKernel3/anykernel.sh
           properties() { '
-          kernel.string=Knight kernel for chopin by @ardiantowb on telegram
+          kernel.string=Welcome to Knight kernel
           do.devicecheck=0
           do.modules=0
           do.systemless=1
@@ -239,8 +239,39 @@ jobs:
 
           . tools/ak3-core.sh;
 
+          if [ -f tools/banner.txt ]; then
+            while IFS= read -r bannerline || [ -n "$bannerline" ]; do
+              ui_print "$bannerline";
+            done < tools/banner.txt;
+          fi;
+
           split_boot;
           flash_boot;
+          EOF
+
+          mkdir -p AnyKernel3/tools
+          cat << 'EOF' > AnyKernel3/tools/banner.txt
+                        /\  /\  /\  /\  /\              
+                        <>  <>  <>  <>  <>              
+                        ==================              
+          
+                     Knight kernel for chopin           
+                    by @ardiantowb on telegram          
+          
+              Thanks to seriaTvT (github) for source    
+               and @itsukacchi (telegram) for help      
+          
+                              ______                    
+                             /      \                   
+                            /        \                  
+                            |        |                  
+                             \      /                   
+                              \    /                    
+                               \  /                     
+                                \/                      
+          
+            "Ironclad stability, valiant performance"   
+                          Knight kernel                 
           EOF
 
       # ------------------------------------------------------------------
@@ -435,7 +466,7 @@ jobs:
             BUILD_TIMESTAMP="$(TZ="$BUILD_TZ" date '+%a %B %d %H:%M:%S %Z %Y')"
           fi
 
-          # Optimasi untuk MT6891 Dimensity 1100 (Cortex-A78 + Cortex-A55,
+          # Optimasi untuk Dimensity 1100 (Cortex-A78 + Cortex-A55,
           # ARMv8.2-A) - sama seperti kelas CPU di kernel 4.14 surya. Flag ini
           # juga tetap valid untuk saudara satu keluarga seperti Dimensity
           # 1200 (MT6893), karena core CPU-nya sama, hanya beda konfigurasi
@@ -569,6 +600,14 @@ jobs:
           path: ${{ github.workspace }}/${{ steps.meta.outputs.artifact_name }}.zip
           if-no-files-found: error
           retention-days: 14
+          # archive: false -> file diupload apa adanya (tidak dibungkus zip
+          # lagi oleh Actions). Hanya berlaku untuk single file, dan hanya
+          # didukung mulai upload-artifact v7 (fitur ini rilis 26 Feb 2026).
+          # Efek: nama artifact di halaman Actions memakai nama file zip-nya
+          # sendiri (parameter "name" di atas diabaikan saat archive: false),
+          # tapi hasil downloadnya persis file .zip AnyKernel3, tanpa
+          # pembungkus .zip tambahan - jadi bisa langsung diflash.
+          archive: false
 
       - name: Upload file boot mentah (ringkas)
         if: ${{ github.event.inputs.artifact_scope != 'lengkap' }}
@@ -611,7 +650,7 @@ jobs:
             echo ""
             echo "| Item | Nilai |"
             echo "|---|---|"
-            echo "| Device | chopin (MT6891 / Dimensity 1100) |"
+            echo "| Device | chopin (Dimensity 1100) |"
             echo "| Defconfig | \`${{ steps.build.outputs.defconfig }}\` |"
             echo "| Toolchain | \`${{ steps.build.outputs.toolchain }}\` |"
             echo "| Droidspaces | ${{ github.event.inputs.droidspaces_enabled }} |"
