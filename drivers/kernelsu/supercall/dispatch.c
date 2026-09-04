@@ -892,9 +892,9 @@ static int do_get_hook_type(void __user *arg)
 #if defined(CONFIG_KSU_TRACEPOINT_HOOK)
     const char *type = "Tracepoint Syscall Redirect";
 #elif defined(CONFIG_KSU_MANUAL_HOOK)
-    const char *type = "Manual";
-#elif defined(CONFIG_KSU_SUSFS)
     const char *type = "Knight";
+#elif defined(CONFIG_KSU_SUSFS)
+    const char *type = "Inline";
 #else
 #error "Unsupported hook type"
 #endif
