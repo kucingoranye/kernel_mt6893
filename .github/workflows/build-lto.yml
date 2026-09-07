@@ -1,4 +1,4 @@
-name: Build Kernel 4.14 Chopin LTO
+name: Build Kernel 4.14 Chopin
 
 on:
   workflow_dispatch:
