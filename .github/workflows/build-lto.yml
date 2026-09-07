@@ -1,4 +1,4 @@
-name: Build Kernel 4.14 Chopin lto
+name: Build Kernel 4.14 Chopin
 
 on:
   workflow_dispatch:
@@ -16,15 +16,15 @@ on:
           - proton13
           - aosp20
           - zyc14
-      lto:
-        description: 'Mode LTO (Link Time Optimization)'
+      lto_mode:
+        description: 'Mode LTO (none = paling cepat & hemat RAM, thin = kompromi, full = paling lambat & paling boros RAM)'
         required: false
-        default: 'thin'
+        default: 'none'
         type: choice
         options:
+          - none
           - thin
           - full
-          - none
       droidspaces_enabled:
         description: 'Integrasikan Droidspaces (patch resmi + konfigurasi kernel)?'
         required: true
@@ -57,7 +57,7 @@ on:
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
   KERNEL_REPO: https://github.com/kucingoranye/kernel_mt6893
-  KERNEL_BRANCH: test3-lto
+  KERNEL_BRANCH: chopin_kvm
   KERNEL_DEVICE: chopin
 
   TC_DIR: ${{ github.workspace }}/toolchain/clang
@@ -103,8 +103,25 @@ jobs:
       # ------------------------------------------------------------------
       - name: Setup swap tambahan
         run: |
-          SWAP_SIZE="4G"
+          LTO_MODE="${{ github.event.inputs.lto_mode || 'none' }}"
 
+          # LTO_CLANG (apalagi full, non-thin) jauh lebih boros RAM saat
+          # tahap link karena banyak translation unit digabung sekaligus.
+          # Runner GitHub Actions cuma ~7GB RAM, jadi makin agresif LTO-nya,
+          # makin besar swap yang disiapkan.
+          case "$LTO_MODE" in
+            full)
+              SWAP_SIZE="16G"
+              ;;
+            thin)
+              SWAP_SIZE="8G"
+              ;;
+            none|*)
+              SWAP_SIZE="4G"
+              ;;
+          esac
+
+          echo "Mode LTO: ${LTO_MODE} -> swap ${SWAP_SIZE}"
           echo "Menambahkan swap ${SWAP_SIZE}..."
           sudo fallocate -l "$SWAP_SIZE" /swapfile_ci
           sudo chmod 600 /swapfile_ci
@@ -199,9 +216,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.ccache
-          key: ccache-chopin414-${{ steps.tcver.outputs.toolchain }}-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-${{ github.event.inputs.lto || 'thin' }}-${{ github.run_id }}
+          key: ccache-chopin414-${{ steps.tcver.outputs.toolchain }}-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-${{ github.run_id }}
           restore-keys: |
-            ccache-chopin414-${{ steps.tcver.outputs.toolchain }}-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-${{ github.event.inputs.lto || 'thin' }}-
+            ccache-chopin414-${{ steps.tcver.outputs.toolchain }}-${{ github.event.inputs.defconfig || 'chopin_defconfig' }}-
 
       - name: Setup ccache
         run: |
@@ -233,7 +250,7 @@ jobs:
           rm -f AnyKernel3/anykernel.sh
           cat << 'EOF' > AnyKernel3/anykernel.sh
           properties() { '
-          kernel.string=Chopin Custom Kernel
+          kernel.string=Welcome to Knight kernel
           do.devicecheck=0
           do.modules=0
           do.systemless=1
@@ -248,8 +265,40 @@ jobs:
 
           . tools/ak3-core.sh;
 
+          if [ -f tools/banner.txt ]; then
+            while IFS= read -r bannerline || [ -n "$bannerline" ]; do
+              ui_print "$bannerline";
+            done < tools/banner.txt;
+          fi;
+
           split_boot;
           flash_boot;
+          EOF
+
+          mkdir -p AnyKernel3/tools
+          cat << 'EOF' > AnyKernel3/tools/banner.txt
+           
+                        /\  /\  /\  /\  /\              
+                        <>  <>  <>  <>  <>              
+                        ==================              
+           
+                     Knight kernel for chopin           
+                    by @ardiantowb on telegram          
+           
+              Thanks to seriaTvT (github) for source    
+               and @itsukacchi (telegram) for help      
+           
+                              ______                    
+                             /      \                   
+                            /        \                  
+                            |        |                  
+                             \      /                   
+                              \    /                    
+                               \  /                     
+                                \/                      
+           
+            "Ironclad stability, valiant performance"   
+                          Knight kernel                 
           EOF
 
       # ------------------------------------------------------------------
@@ -393,54 +442,7 @@ jobs:
           echo "Konfigurasi Droidspaces sudah ditambahkan ke $DEFCONFIG"
 
       # ------------------------------------------------------------------
-      # 9.6. TERAPKAN PILIHAN LTO (Link Time Optimization)
-      #      Default: thin. Menulis CONFIG_LTO_CLANG / CONFIG_THINLTO
-      #      langsung ke file defconfig, dengan pola yang sama seperti
-      #      step Droidspaces di atas (idempotent - setting lama dibuang
-      #      dulu sebelum ditulis ulang, jadi aman dijalankan berkali-kali
-      #      atau re-run workflow).
-      # ------------------------------------------------------------------
-      - name: Terapkan pilihan LTO
-        id: lto
-        working-directory: ${{ env.KERNEL_DIR }}
-        run: |
-          set -euo pipefail
-
-          LTO_MODE="${{ github.event.inputs.lto || 'thin' }}"
-          DEFCONFIG="arch/arm64/configs/${{ github.event.inputs.defconfig || 'chopin_defconfig' }}"
-
-          case "$LTO_MODE" in
-            thin|full|none) ;;
-            *)
-              echo "::error::Mode LTO tidak dikenali: $LTO_MODE (harus thin/full/none)"
-              exit 1
-              ;;
-          esac
-
-          # Buang dulu setting LTO lama kalau ada (dari commit manual
-          # sebelumnya, atau re-run dengan pilihan LTO yang berbeda),
-          # supaya tidak dobel/konflik.
-          sed -i '/^CONFIG_LTO_CLANG/d; /^CONFIG_THINLTO/d; /^# CONFIG_LTO_CLANG/d; /^# ===== LTO Clang/d' "$DEFCONFIG"
-
-          if [ "$LTO_MODE" = "none" ]; then
-            echo "LTO dimatikan (mode: none), tidak ada konfigurasi LTO yang ditambahkan"
-          else
-            if [ -n "$(tail -c1 "$DEFCONFIG")" ]; then echo >> "$DEFCONFIG"; fi
-            {
-              echo ""
-              echo "# ===== LTO Clang (mode: $LTO_MODE) ====="
-              echo "CONFIG_LTO_CLANG=y"
-              if [ "$LTO_MODE" = "thin" ]; then
-                echo "CONFIG_THINLTO=y"
-              fi
-            } >> "$DEFCONFIG"
-            echo "Konfigurasi LTO ($LTO_MODE) ditambahkan ke $DEFCONFIG"
-          fi
-
-          echo "lto_mode=${LTO_MODE}" >> "$GITHUB_OUTPUT"
-
-      # ------------------------------------------------------------------
-      # 9.7. SIAPKAN NAMA ARTIFACT
+      # 9.6. SIAPKAN NAMA ARTIFACT
       # ------------------------------------------------------------------
       - name: Siapkan nama artifact
         id: meta
@@ -448,16 +450,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           BRANCH_SAFE="${BRANCH_NAME//\//-}"
-          TANGGAL=$(date +'%d%m%Y')
-          TOOLCHAIN="${{ steps.tcver.outputs.toolchain || 'aosp20' }}"
-          LTO_MODE="${{ steps.lto.outputs.lto_mode || 'thin' }}"
-          if [ "$LTO_MODE" = "none" ]; then
-            LTO_TAG="nolto"
-          else
-            LTO_TAG="lto-${LTO_MODE}"
-          fi
-          echo "artifact_name=kernel-4.14-chopin-${TOOLCHAIN}-${LTO_TAG}-${BRANCH_SAFE}-${{ github.run_number }}-${TANGGAL}" >> "$GITHUB_OUTPUT"
-          echo "tanggal=${TANGGAL}" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=chopin-${BRANCH_SAFE}-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
       # ------------------------------------------------------------------
       # 10. BUILD KERNEL (dengan timer)
@@ -472,6 +465,7 @@ jobs:
 
           DEFCONFIG="${{ github.event.inputs.defconfig || 'chopin_defconfig' }}"
           TOOLCHAIN="${{ steps.tcver.outputs.toolchain }}"
+          LTO_MODE="${{ github.event.inputs.lto_mode || 'none' }}"
 
           # --- Host & timestamp build (custom, default timezone UTC) ---
           BUILD_TZ="${{ github.event.inputs.build_timezone || 'UTC' }}"
@@ -497,7 +491,7 @@ jobs:
             BUILD_TIMESTAMP="$(TZ="$BUILD_TZ" date '+%a %B %d %H:%M:%S %Z %Y')"
           fi
 
-          # Optimasi untuk MT6891 Dimensity 1100 (Cortex-A78 + Cortex-A55,
+          # Optimasi untuk Dimensity 1100 (Cortex-A78 + Cortex-A55,
           # ARMv8.2-A) - sama seperti kelas CPU di kernel 4.14 surya. Flag ini
           # juga tetap valid untuk saudara satu keluarga seperti Dimensity
           # 1200 (MT6893), karena core CPU-nya sama, hanya beda konfigurasi
@@ -533,32 +527,36 @@ jobs:
             KCFLAGS="$CUSTOM_CFLAGS"
           )
 
-          echo "=== Defconfig: $DEFCONFIG | Toolchain: $TOOLCHAIN | Host: ${BUILD_USER}@${BUILD_HOST} | Timestamp: ${BUILD_TIMESTAMP} ==="
+          echo "=== Defconfig: $DEFCONFIG | Toolchain: $TOOLCHAIN | LTO: $LTO_MODE | Host: ${BUILD_USER}@${BUILD_HOST} | Timestamp: ${BUILD_TIMESTAMP} ==="
 
           LOG_FILE="${{ github.workspace }}/build.log"
 
           # --- Generate defconfig ---
           make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" "$DEFCONFIG" 2>&1 | tee "$LOG_FILE"
 
-          # --- Verifikasi LTO benar-benar aktif di .config hasil defconfig ---
-          # Kalau simbol CONFIG_LTO_CLANG/CONFIG_THINLTO belum didefinisikan
-          # di Kconfig source (arch/Kconfig, arch/arm64/Kconfig), Kconfig
-          # cuma memberi warning dan diam-diam mengabaikannya - build akan
-          # tetap jalan tanpa LTO tanpa pemberitahuan jelas. Cek eksplisit
-          # di sini supaya gagal cepat dengan pesan yang jelas.
-          LTO_MODE="${{ steps.lto.outputs.lto_mode }}"
-          CONFIG_OUT="$OUT_DIR/.config"
+          # --- Terapkan mode LTO (default: none, tidak menyentuh .config) ---
+          case "$LTO_MODE" in
+            full)
+              echo "Mengaktifkan LTO_CLANG (full)..."
+              ./scripts/config --file "$OUT_DIR/.config" \
+                -d LTO_NONE -e LTO_CLANG -d THINLTO
+              ;;
+            thin)
+              echo "Mengaktifkan LTO_CLANG (ThinLTO)..."
+              ./scripts/config --file "$OUT_DIR/.config" \
+                -d LTO_NONE -e LTO_CLANG -e THINLTO
+              ;;
+            none)
+              echo "LTO tidak diaktifkan (default)"
+              ;;
+            *)
+              echo "::error::Mode LTO tidak dikenali: $LTO_MODE"
+              exit 1
+              ;;
+          esac
 
           if [ "$LTO_MODE" != "none" ]; then
-            if ! grep -q '^CONFIG_LTO_CLANG=y' "$CONFIG_OUT"; then
-              echo "::error::CONFIG_LTO_CLANG tidak aktif di .config walau sudah ditambahkan ke defconfig. Kemungkinan simbol ini belum didefinisikan di Kconfig source kernel ini (cek arch/Kconfig untuk 'config LTO_CLANG', dan arch/arm64/Kconfig untuk 'select ARCH_SUPPORTS_LTO_CLANG' di dalam blok 'config ARM64')."
-              exit 1
-            fi
-            if [ "$LTO_MODE" = "thin" ] && ! grep -q '^CONFIG_THINLTO=y' "$CONFIG_OUT"; then
-              echo "::error::CONFIG_THINLTO tidak aktif di .config. Cek arch/arm64/Kconfig untuk 'select ARCH_SUPPORTS_THINLTO' di dalam blok 'config ARM64'."
-              exit 1
-            fi
-            echo "LTO ($LTO_MODE) terverifikasi aktif di .config"
+            make O="$OUT_DIR" "${TOOLCHAIN_ARGS[@]}" olddefconfig 2>&1 | tee -a "$LOG_FILE"
           fi
 
           # --- Build utama ---
@@ -580,6 +578,7 @@ jobs:
           echo "duration_sec=${SEC}" >> "$GITHUB_OUTPUT"
           echo "defconfig=${DEFCONFIG}" >> "$GITHUB_OUTPUT"
           echo "toolchain=${TOOLCHAIN}" >> "$GITHUB_OUTPUT"
+          echo "lto_mode=${LTO_MODE}" >> "$GITHUB_OUTPUT"
           echo "build_host=${BUILD_USER}@${BUILD_HOST}" >> "$GITHUB_OUTPUT"
           echo "build_timestamp=${BUILD_TIMESTAMP}" >> "$GITHUB_OUTPUT"
 
@@ -694,10 +693,10 @@ jobs:
             echo ""
             echo "| Item | Nilai |"
             echo "|---|---|"
-            echo "| Device | chopin (MT6891 / Dimensity 1100) |"
+            echo "| Device | chopin (Dimensity 1100) |"
             echo "| Defconfig | \`${{ steps.build.outputs.defconfig }}\` |"
             echo "| Toolchain | \`${{ steps.build.outputs.toolchain }}\` |"
-            echo "| LTO | \`${{ steps.lto.outputs.lto_mode }}\` |"
+            echo "| LTO | \`${{ steps.build.outputs.lto_mode }}\` |"
             echo "| Droidspaces | ${{ github.event.inputs.droidspaces_enabled }} |"
             echo "| Build host | \`${{ steps.build.outputs.build_host }}\` |"
             echo "| Build timestamp | \`${{ steps.build.outputs.build_timestamp }}\` |"
