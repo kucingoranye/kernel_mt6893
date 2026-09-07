@@ -900,7 +900,6 @@ scripts/module-lto.lds: scripts/module-lto.lds.S FORCE
 		-P -C -U$(ARCH) -D__ASSEMBLY__ -DLINKER_SCRIPT -o $@ $<
 
 prepare: scripts/module-lto.lds
-endif
 
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto
