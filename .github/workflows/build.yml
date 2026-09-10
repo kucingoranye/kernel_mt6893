@@ -48,7 +48,7 @@ on:
 env:
   KERNEL_DIR: ${{ github.workspace }}/kernel
   KERNEL_REPO: https://github.com/kucingoranye/kernel_mt6893
-  KERNEL_BRANCH: clean
+  KERNEL_BRANCH: resukisu-susfs-2.3
   KERNEL_DEVICE: chopin
 
   TC_DIR: ${{ github.workspace }}/toolchain/clang
@@ -272,7 +272,7 @@ jobs:
                                 \/                      
            
             "Ironclad stability, valiant performance"   
-                      Follow @knight_kernel                 
+                         @knight_kernel                 
           EOF
 
       # ------------------------------------------------------------------
