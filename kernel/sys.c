@@ -1204,8 +1204,10 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));
+	up_read(&uts_sem);
+
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
-	if (static_branch_likely(&susfs_is_uname_spoof_buffer_set))
+	if (static_branch_unlikely(&susfs_is_uname_spoof_buffer_set))
 		susfs_spoof_uname(&tmp);
 #endif
 
@@ -1215,8 +1217,6 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 		!strncmp(current->comm, "netd", 4))) {
 		strcpy(tmp.release, "5.10.260");
 	}
-	
-	up_read(&uts_sem);
 	
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
