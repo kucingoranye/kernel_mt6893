@@ -1198,39 +1198,30 @@ static int override_release(char __user *release, size_t len)
 extern struct static_key_false susfs_is_uname_spoof_buffer_set;
 extern void susfs_spoof_uname(struct new_utsname* tmp);
 #endif
+
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
-	const char *comm = current->comm;
-	int i;
-
-	static const struct {
-		const char *name;
-		size_t len;
-	} fake_comm[] = {
-		{ "bpfloader",    9  },
-		{ "netbpfload",   10 },
-		{ "netd",         4  },
-		{ "uprobestats",  11 },
-		{ "fsck.f2fs",    9  },
-		{ "pool-",		  5  },
-	};
 
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));
+
+	if (current_uid().val == 0 && 
+	    (!strncmp(current->comm, "bpfloader", 9) ||
+	     !strncmp(current->comm, "netbpfload", 10) ||
+	     !strncmp(current->comm, "uprobestats", 11) ||
+	     !strncmp(current->comm, "netd", 4))) {
+		
+		strscpy(tmp.release, "5.10.253", sizeof(tmp.release));
+	}
+
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 	if (static_branch_likely(&susfs_is_uname_spoof_buffer_set))
 		susfs_spoof_uname(&tmp);
 #endif
-    for (i = 0; i < ARRAY_SIZE(fake_comm); i++) {
-		if (!strncmp(comm, fake_comm[i].name, fake_comm[i].len)) {
-			strscpy(tmp.release, "5.10.253",
-				sizeof(tmp.release));
-			break;
-		}
-	}
 
 	up_read(&uts_sem);
+
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
 
