@@ -1202,8 +1202,8 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 	if (current_uid().val == 0 && 
 		(!strncmp(current->comm, "bpfloader", 9) ||
 		!strncmp(current->comm, "netbpfload", 10) ||
-		!strncmp(current->comm, "netd", 4))) {
-		strcpy(tmp.release, "5.10.260");
+		!strncmp(current->comm, "netd", 4))) {		
+		strscpy(tmp.release, "5.10.260", sizeof(tmp.release));
 	}
 	
 	up_read(&uts_sem);
