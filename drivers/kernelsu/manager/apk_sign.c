@@ -41,7 +41,6 @@ static apk_sign_key_t apk_sign_keys[] = {
     { EXPECTED_SIZE_KOWX712, EXPECTED_HASH_KOWX712 }, // KOWX712/KernelSU
     { EXPECTED_SIZE_KSUN, EXPECTED_HASH_KSUN }, // rifsxd/KernelSU-Next
     { EXPECTED_SIZE_MAMBO, EXPECTED_HASH_MAMBO }, // RapliVx/MamboSU
-    { EXPECTED_SIZE_WILD, EXPECTED_HASH_WILD }, // WildKernels/Wild_KSU
     { EXPECTED_SIZE_PERSHOOT, EXPECTED_HASH_PERSHOOT }, // pershoot/KernelSU-Next
     { EXPECTED_SIZE_KAMI, EXPECTED_HASH_KAMI }, // kaminarich/KamiSU
     { EXPECTED_SIZE_YUKISU, EXPECTED_HASH_YUKISU }, // Anatdx/YukiSU
