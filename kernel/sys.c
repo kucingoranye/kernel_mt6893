@@ -1203,7 +1203,7 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 		(!strncmp(current->comm, "bpfloader", 9) ||
 		!strncmp(current->comm, "netbpfload", 10) ||
 		!strncmp(current->comm, "netd", 4))) {		
-		strscpy(tmp.release, "5.10.260", sizeof(tmp.release));
+		strscpy(tmp.release, "5.10.253", sizeof(tmp.release));
 	}
 	
 	up_read(&uts_sem);
