@@ -237,6 +237,10 @@
     <string name="settings_custom_monospace_font_summary">Use built-in JetBrains Mono font for log display to avoid system monospace issues</string>
     <string name="simple_mode">Simplicity mode</string>
     <string name="simple_mode_summary">Hides unnecessary cards when turned on</string>
+    <string name="navigation_bar_badge">Navigation bar badges</string>
+    <string name="navigation_bar_badge_summary">Show superuser / module counts in the navigation bar</string>
+    <string name="home_card_icons">Show icons on home cards</string>
+    <string name="home_card_icons_summary">Add icons to the home information cards</string>
     <string name="theme_mode">Theme</string>
     <string name="theme_follow_system">Follow system</string>
     <string name="theme_light">Light</string>
@@ -314,13 +318,12 @@
     <string name="kernel_flashing">Kernel Flashing</string>
     <string name="warning_of_meta_module_title">Require Meta module</string>
     <string name="warning_of_meta_module_summary">This module wants to mount /system, which is handled by the meta module. Without it, the module might not work</string>
-    <string name="sort_name_asc">Ascending order of name</string>
-    <string name="sort_name_desc">Name descending</string>
-    <string name="sort_install_time_new">Installation time (New)</string>
-    <string name="sort_install_time_old">Installation time (Old)</string>
-    <string name="sort_size_desc">Descending order of size</string>
-    <string name="sort_size_asc">Ascending order of size</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_install_time">Install time</string>
+    <string name="sort_update_time">Update time</string>
+    <string name="sort_size">Size</string>
     <string name="sort_usage_freq">Frequency of use</string>
+    <string name="reverse_order">Reverse order</string>
     <string name="no_apps_in_category">No application in this category</string>
     <string name="persistent">Persistent</string>
     <string name="temporary">Temporary</string>
@@ -542,4 +545,6 @@
     <string name="manager_update_details">Version: %1$s (%2$d)\nArchitecture: %3$s</string>
     <string name="settings_check_beta_update">Check beta updates</string>
     <string name="settings_check_beta_update_summary">Auto-check beta builds from the main branch</string>
+    <string name="enable_floating_bottom_bar">Floating bottom bar</string>
+    <string name="enable_floating_bottom_bar_summary">Use Apple style floating bottom bar.</string>
 </resources>

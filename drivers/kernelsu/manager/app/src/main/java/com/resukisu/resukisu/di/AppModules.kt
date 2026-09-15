@@ -71,8 +71,6 @@ import com.resukisu.resukisu.domain.usecase.GetBooleanPreferenceUseCase
 import com.resukisu.resukisu.domain.usecase.GetCatalogModuleUseCase
 import com.resukisu.resukisu.domain.usecase.GetDefaultUmountModulesUseCase
 import com.resukisu.resukisu.domain.usecase.GetHomeBasicInfoUseCase
-import com.resukisu.resukisu.domain.usecase.GetHomeModuleOverviewUseCase
-import com.resukisu.resukisu.domain.usecase.GetHomeSuperuserCountUseCase
 import com.resukisu.resukisu.domain.usecase.GetInstallEnvironmentUseCase
 import com.resukisu.resukisu.domain.usecase.GetKernelFeatureSettingsUseCase
 import com.resukisu.resukisu.domain.usecase.GetKernelStatusUseCase
@@ -295,8 +293,6 @@ val repositoryModule = module {
 val useCaseModule = module {
     factoryOf(::InitializeApplicationUseCase)
     factoryOf(::GetHomeBasicInfoUseCase)
-    factoryOf(::GetHomeModuleOverviewUseCase)
-    factoryOf(::GetHomeSuperuserCountUseCase)
     factoryOf(::IsNetworkAvailableUseCase)
     factoryOf(::LoadSettingsPlatformUseCase)
     factoryOf(::UpdateAppearanceUseCase)

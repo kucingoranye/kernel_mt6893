@@ -261,12 +261,6 @@
     <string name="kernel_flashing">Çekirdek Yükleniyor</string>
     <string name="warning_of_meta_module_title">Meta modül gerektirir</string>
     <string name="warning_of_meta_module_summary">Bu modül, meta modül tarafından yönetilen /system bölümünü bağlamak istiyor. Bu modül meta modül olmadan çalışmayabilir</string>
-    <string name="sort_name_asc">İsme göre artan sırada</string>
-    <string name="sort_name_desc">İsme göre azalan sırada</string>
-    <string name="sort_install_time_new">Kurulum zamanı (yeni)</string>
-    <string name="sort_install_time_old">Kurulum zamanı (eski)</string>
-    <string name="sort_size_desc">Boyuta göre azalan sırada</string>
-    <string name="sort_size_asc">Boyuta göre artan sırada</string>
     <string name="sort_usage_freq">Kullanım sıklığına göre</string>
     <string name="no_apps_in_category">Bu kategoride uygulama yok</string>
     <string name="persistent">Kalıcı</string>
@@ -535,4 +529,7 @@
     <string name="susfs_enable_config">SUSFS Yöneticisi</string>
     <string name="susfs_enable_config_summary">Yerleşik SUSFS yöneticisini etkinleştirir. Üçüncü taraf modüllerle çakışabilir.</string>
     <string name="susfs_config_disable_warning">Yerleşik SUSFS yöneticisi devre dışı. SUSFS özelliklerini kullanmak için bunu etkinleştirin veya üçüncü taraf bir modül yükleyin.</string>
+    <string name="require_manager_version">Yönetici güncellemesi gerekiyor</string>
+    <string name="require_kernel_version">Çekirdek güncellemesi gerekiyor. Kurmak için dokunun.</string>
+    <string name="require_kernel_version_gki">Çekirdek güncellemesi gerekiyor</string>
 </resources>
