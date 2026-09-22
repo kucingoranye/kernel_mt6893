@@ -115,7 +115,7 @@ fun NavigationBar(
                                 tint = contentColor
                             )
                         }
-                        if (count > 0) {
+                        if (count > 0 && showNavigationBarBadge) {
                             BadgedBox(badge = { Badge { Text(count.toString()) } }) { icon() }
                         } else {
                             icon()
