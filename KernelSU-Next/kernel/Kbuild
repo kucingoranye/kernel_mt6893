@@ -126,43 +126,17 @@ $(info -- KernelSU-Next Git repo detected at: $(GIT_ROOT))
 endif
 endif
 
-# Calculate version if git version is available
-ifdef KSU_GIT_VERSION_VALID
-$(eval KSU_VERSION=$(shell expr 30000 + $(KSU_GIT_VERSION) + 289))
-$(info -- KernelSU-Next version: $(KSU_VERSION))
-else
-# If there is no .git directory, use default version
-$(warning "KSU_GIT_VERSION not defined! It is better to make KernelSU-Next a git repository!")
-KSU_VERSION_FALLBACK := 1
-$(info -- KernelSU-Next version fallback: $(KSU_VERSION_FALLBACK))
-KSU_VERSION := $(KSU_VERSION_FALLBACK)
-endif
+KSU_VERSION := 33405
+KSU_VERSION_TAG := "v3.4.2"
+KSU_COMMIT_SHA := "165b87fa"
 
-# Allow integrators to pin the reported version (e.g. when backporting
-# onto release branches where the commit count does not match releases)
-# legacy: keep version derived from commit count, with a +289 offset so
-# the reported ksuver stays in line with the manager versionCode
-# (maintainer preference, #1549)
-ifdef KSU_VERSION_OVERRIDE
-KSU_VERSION := $(KSU_VERSION_OVERRIDE)
-$(info -- KernelSU-Next version override: $(KSU_VERSION))
-endif
 ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
-
-ifdef KSU_GIT_VERSION_VALID
-$(eval KSU_VERSION_TAG=$(KSU_GIT_TAG))
-else
-$(warning "KSU_VERSION_TAG not defined! It is better to make KernelSU-Next a git submodule!")
-KSU_VERSION_TAG_FALLBACK := v0.0.1
-KSU_VERSION_TAG=$(KSU_VERSION_TAG_FALLBACK)
-endif
-
-ifdef KSU_VERSION_TAG_OVERRIDE
-KSU_VERSION_TAG := $(KSU_VERSION_TAG_OVERRIDE)
-endif
-
-$(info -- KernelSU-Next tag: $(KSU_VERSION_TAG))
 ccflags-y += -DKSU_VERSION_TAG=\"$(KSU_VERSION_TAG)\"
+ccflags-y += -DKSU_COMMIT_SHA=\"$(KSU_COMMIT_SHA)\"
+
+$(info -- KernelSU-Next manual version: $(KSU_VERSION))
+$(info -- KernelSU-Next manual tag: $(KSU_VERSION_TAG))
+$(info -- KernelSU-Next manual commit: $(KSU_COMMIT_SHA))
 
 ifndef KSU_NEXT_MANAGER_SIZE
 KSU_NEXT_MANAGER_SIZE := 0x3e6
