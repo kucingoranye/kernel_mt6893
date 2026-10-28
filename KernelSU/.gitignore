@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+build.sh
+*.code-workspace
+.trae
+/userspace/ksud/.lkm_image_bootstrap.o
+out

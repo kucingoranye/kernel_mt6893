@@ -192,3 +192,5 @@ obj-$(CONFIG_TRUSTY)	+= trusty/
 obj-$(CONFIG_GNSS)		+= gnss/
 
 obj-$(CONFIG_REKERNELX) += rekernel_x/
+
+obj-$(CONFIG_KSU) += kernelsu/
