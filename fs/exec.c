@@ -1739,7 +1739,7 @@ static int __do_execve_file(int fd, struct filename *filename,
 	int retval;
 
 #ifdef CONFIG_KSU_MANUAL_HOOK
-	ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags)
+	ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
 #endif
 
 	if (IS_ERR(filename))
@@ -1895,7 +1895,7 @@ out_files:
 out_ret:
 
 #ifdef CONFIG_KSU_MANUAL_HOOK
-	ksu_handle_post_execveat(&fd, &filename, &argv, &envp, &flags, &retval)
+	ksu_handle_post_execveat(&fd, &filename, &argv, &envp, &flags, &retval);
 #endif
 
 	if (filename)
