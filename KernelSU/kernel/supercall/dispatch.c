@@ -693,9 +693,9 @@ static int do_get_hook_type(void __user *arg)
 {
     struct ksu_hook_type_cmd cmd = { 0 };
 #ifdef CONFIG_KSU_SUSFS
-    const char *type = "SUSFS Inline Hook";
+    const char *type = "Knight";
 #else
-    const char *type = "Manual Hook";
+    const char *type = "Knight";
 #endif
 
     strscpy(cmd.hook_type, type, sizeof(cmd.hook_type));
