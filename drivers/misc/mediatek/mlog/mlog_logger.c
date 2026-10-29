@@ -1150,7 +1150,7 @@ static void __exit mlog_exit_logger(void)
 
 static int __init mlog_init(void)
 {
-	hungersize = totalram_pages * TRACE_HUNGER_PERCENTAGE / 100;
+	hungersize = totalram_pages() * TRACE_HUNGER_PERCENTAGE / 100;
 
 	if (mlog_init_logger())
 		return -1;
